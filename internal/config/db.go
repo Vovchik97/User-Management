@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"userManagement/internal/models"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
@@ -14,7 +15,7 @@ import (
 var DB *gorm.DB
 
 // Инициализируем подключение к БД
-func InintDB() {
+func InitDB() {
 	// Загружаем .ENV файл
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Ошибка загрузки .env файла: ")
@@ -38,5 +39,14 @@ func InintDB() {
 
 	// Сохраняем подключение в глобальной переменной
 	DB = db
-	fmt.Println("Подключение к базе данных успешно!")
+
+	// Автоматическая миграция таблицы users
+	err = db.AutoMigrate(
+		&models.User{},
+	)
+	if err != nil {
+		log.Fatal("Ошибка миграции: ", err)
+	}
+
+	fmt.Println("Подключение к базе данных успешно! Миграция завершена.")
 }
