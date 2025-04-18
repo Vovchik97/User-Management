@@ -43,6 +43,7 @@ func InitDB() {
 	// Автоматическая миграция таблицы users
 	err = db.AutoMigrate(
 		&models.User{},
+		&models.Group{},
 	)
 	if err != nil {
 		log.Fatal("Ошибка миграции: ", err)

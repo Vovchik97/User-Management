@@ -3,7 +3,6 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"userManagement/internal/handlers"
-	"userManagement/internal/middleware"
 )
 
 func RegisterUserRoutes(r *gin.Engine) {
@@ -12,7 +11,7 @@ func RegisterUserRoutes(r *gin.Engine) {
 		users.GET("/", handlers.GetUsers)
 		users.POST("/", handlers.CreateUser)
 		users.PUT("/:id", handlers.UpdateUser)
-		users.DELETE("/:id", middleware.RequireAdmin(), handlers.DeleteUser)
+		users.DELETE("/:id", handlers.DeleteUser)
 		users.PATCH("/:id/role", handlers.UpdateUserRole)
 	}
 }

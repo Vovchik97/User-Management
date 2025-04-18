@@ -14,7 +14,19 @@ definitions:
     - name
     - password
     type: object
+  handlers.GroupInput:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
   handlers.ResponseError:
+    properties:
+      message:
+        type: string
+    type: object
+  handlers.ResponseMessage:
     properties:
       message:
         type: string
@@ -33,10 +45,33 @@ definitions:
       role:
         enum:
         - admin
+        - moderator
         - user
         type: string
     required:
     - role
+    type: object
+  handlers.UserGroupInput:
+    properties:
+      user_id:
+        type: integer
+    required:
+    - user_id
+    type: object
+  models.Group:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
     type: object
   models.User:
     properties:
@@ -44,6 +79,10 @@ definitions:
         type: string
       email:
         type: string
+      groups:
+        items:
+          $ref: '#/definitions/models.Group'
+        type: array
       id:
         type: integer
       name:
@@ -68,6 +107,184 @@ info:
   title: User Management API
   version: "1.0"
 paths:
+  /groups:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Group'
+            type: array
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
+      summary: Получение списка всех групп
+      tags:
+      - groups
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Название группы
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.GroupInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.ResponseMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
+      summary: Создание новой группы
+      tags:
+      - groups
+  /groups/{id}:
+    delete:
+      parameters:
+      - description: ID группы
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseMessage'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
+      summary: Удаление группы
+      tags:
+      - groups
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID группы
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новое название
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.GroupInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
+      summary: Обновление названия группы
+      tags:
+      - groups
+  /groups/{id}/users:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID группы
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ID пользователя для добавления
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserGroupInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
+      summary: Добавление пользователя в группу
+      tags:
+      - groups
+  /groups/{id}/users/{user_id}:
+    delete:
+      parameters:
+      - description: ID группы
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ID пользователя
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
+      summary: Удаление пользователя из группы
+      tags:
+      - groups
   /users:
     get:
       description: Получение списка всех пользователей или отфильтрованных по роли.

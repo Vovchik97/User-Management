@@ -1,16 +1,14 @@
 package middleware
 
 import (
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"userManagement/internal/config"
 	"userManagement/internal/handlers"
 	"userManagement/internal/models"
-
-	"github.com/gin-gonic/gin"
 )
 
-// RequireAdmin проверяет, является ли пользователь администратором
-func RequireAdmin() gin.HandlerFunc {
+func Authorize(allowedRoles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.GetHeader("X-User-ID")
 		if userID == "" {
@@ -21,18 +19,19 @@ func RequireAdmin() gin.HandlerFunc {
 
 		var user models.User
 		if err := config.DB.First(&user, userID).Error; err != nil {
-			c.JSON(http.StatusUnauthorized, handlers.ResponseError{Message: "Пользователь не найден"})
+			c.JSON(http.StatusUnauthorized, handlers.ResponseError{Message: "Пользователь не найден"})
 			c.Abort()
 			return
 		}
 
-		if user.Role != "admin" {
-			c.JSON(http.StatusForbidden, handlers.ResponseError{Message: "Недостаточно прав"})
-			c.Abort()
-			return
+		for _, role := range allowedRoles {
+			if user.Role == role {
+				c.Set("currentUser", user)
+				c.Next()
+				return
+			}
 		}
-
-		c.Set("currentUser", user)
-		c.Next()
+		c.JSON(http.StatusForbidden, handlers.ResponseError{Message: "Недостаточно прав"})
+		c.Abort()
 	}
 }

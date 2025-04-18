@@ -1,9 +1,5 @@
 package handlers
 
-// ResponseError - структура для ответа с ошибкой
-type ResponseError struct {
-	Message string `json:"message"`
-}
 type CreateUserInput struct {
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
@@ -16,5 +12,5 @@ type UpdateUserInput struct {
 }
 
 type UpdateUserRoleInput struct {
-	Role string `json:"role" binding:"required,oneof=admin user"`
+	Role string `json:"role" binding:"required,oneof=admin moderator user"`
 }
