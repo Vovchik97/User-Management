@@ -25,7 +25,12 @@ const docTemplate = `{
     "paths": {
         "/users": {
             "get": {
-                "description": "Получение списка всех пользователей.",
+                "security": [
+                    {
+                        "UserID": []
+                    }
+                ],
+                "description": "Получение списка всех пользователей или отфильтрованных по роли.",
                 "produces": [
                     "application/json"
                 ],
@@ -33,6 +38,14 @@ const docTemplate = `{
                     "Users"
                 ],
                 "summary": "Получение списка пользователей",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Роль пользователя",
+                        "name": "role",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -52,6 +65,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "UserID": []
+                    }
+                ],
                 "description": "Создание нового пользователя с указанием имени, email, пароля и роли.",
                 "consumes": [
                     "application/json"
@@ -92,6 +110,11 @@ const docTemplate = `{
         },
         "/users/{id}": {
             "put": {
+                "security": [
+                    {
+                        "UserID": []
+                    }
+                ],
                 "description": "Обновление данных пользователя по его ID.",
                 "consumes": [
                     "application/json"
@@ -143,6 +166,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "UserID": []
+                    }
+                ],
                 "description": "Удаление пользователя по его ID.",
                 "tags": [
                     "Users"
@@ -160,6 +188,64 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "Пользователь удален",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/role": {
+            "patch": {
+                "security": [
+                    {
+                        "UserID": []
+                    }
+                ],
+                "description": "Обновление роли пользователя по ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Назначить роль пользователю",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новая роль",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UpdateUserRoleInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный ввод",
                         "schema": {
                             "$ref": "#/definitions/handlers.ResponseError"
                         }
@@ -217,6 +303,21 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.UpdateUserRoleInput": {
+            "type": "object",
+            "required": [
+                "role"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "user"
+                    ]
+                }
+            }
+        },
         "models.User": {
             "type": "object",
             "required": [
@@ -242,6 +343,13 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "UserID": {
+            "type": "apiKey",
+            "name": "X-User-ID",
+            "in": "header"
         }
     }
 }`

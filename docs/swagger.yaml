@@ -28,6 +28,16 @@ definitions:
     required:
     - name
     type: object
+  handlers.UpdateUserRoleInput:
+    properties:
+      role:
+        enum:
+        - admin
+        - user
+        type: string
+    required:
+    - role
+    type: object
   models.User:
     properties:
       created_at:
@@ -60,7 +70,12 @@ info:
 paths:
   /users:
     get:
-      description: Получение списка всех пользователей.
+      description: Получение списка всех пользователей или отфильтрованных по роли.
+      parameters:
+      - description: Роль пользователя
+        in: query
+        name: role
+        type: string
       produces:
       - application/json
       responses:
@@ -74,6 +89,8 @@ paths:
           description: Ошибка при получении списка пользователей
           schema:
             $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
       summary: Получение списка пользователей
       tags:
       - Users
@@ -100,6 +117,8 @@ paths:
           description: Ошибка при создании пользователя
           schema:
             $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
       summary: Создание нового пользователя
       tags:
       - Users
@@ -121,6 +140,8 @@ paths:
           description: Пользователь не найден
           schema:
             $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
       summary: Удаление пользователя
       tags:
       - Users
@@ -155,7 +176,51 @@ paths:
           description: Пользователь не найден
           schema:
             $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
       summary: Обновление пользователя
       tags:
       - Users
+  /users/{id}/role:
+    patch:
+      consumes:
+      - application/json
+      description: Обновление роли пользователя по ID
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новая роль
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateUserRoleInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.User'
+        "400":
+          description: Неверный ввод
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
+      summary: Назначить роль пользователю
+      tags:
+      - Users
+securityDefinitions:
+  UserID:
+    in: header
+    name: X-User-ID
+    type: apiKey
 swagger: "2.0"

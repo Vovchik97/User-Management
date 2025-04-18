@@ -14,6 +14,9 @@ package main
 // @host      localhost:8080
 // @BasePath  /
 
+// @securityDefinitions.apikey UserID
+// @in header
+// @name X-User-ID
 import (
 	"userManagement/internal/config"
 	"userManagement/internal/routes"
@@ -36,7 +39,7 @@ func main() {
 	routes.RegisterAllRoutes(r)
 
 	// Подключаем Swagger
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.InstanceName("swagger"), ginSwagger.DocExpansion("none")))
 
 	// Запуск сервера
 	r.Run(":8080")

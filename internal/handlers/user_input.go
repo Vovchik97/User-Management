@@ -14,3 +14,7 @@ type UpdateUserInput struct {
 	Name  string `json:"name" binding:"required"`
 	Email string `json:"email" binding:"omitempty,email"`
 }
+
+type UpdateUserRoleInput struct {
+	Role string `json:"role" binding:"required,oneof=admin user"`
+}
