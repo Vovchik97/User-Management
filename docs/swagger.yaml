@@ -58,6 +58,17 @@ definitions:
     required:
     - user_id
     type: object
+  models.ActivityLog:
+    properties:
+      action:
+        type: string
+      id:
+        type: integer
+      timestamp:
+        type: string
+      user_id:
+        type: integer
+    type: object
   models.Group:
     properties:
       created_at:
@@ -85,6 +96,8 @@ definitions:
         type: array
       id:
         type: integer
+      is_banned:
+        type: boolean
       name:
         type: string
       role:
@@ -126,7 +139,7 @@ paths:
       - UserID: []
       summary: Получение списка всех групп
       tags:
-      - groups
+      - Groups
     post:
       consumes:
       - application/json
@@ -156,7 +169,7 @@ paths:
       - UserID: []
       summary: Создание новой группы
       tags:
-      - groups
+      - Groups
   /groups/{id}:
     delete:
       parameters:
@@ -180,7 +193,7 @@ paths:
       - UserID: []
       summary: Удаление группы
       tags:
-      - groups
+      - Groups
     put:
       consumes:
       - application/json
@@ -215,7 +228,7 @@ paths:
       - UserID: []
       summary: Обновление названия группы
       tags:
-      - groups
+      - Groups
   /groups/{id}/users:
     post:
       consumes:
@@ -251,7 +264,7 @@ paths:
       - UserID: []
       summary: Добавление пользователя в группу
       tags:
-      - groups
+      - Groups
   /groups/{id}/users/{user_id}:
     delete:
       parameters:
@@ -284,7 +297,7 @@ paths:
       - UserID: []
       summary: Удаление пользователя из группы
       tags:
-      - groups
+      - Groups
   /users:
     get:
       description: Получение списка всех пользователей или отфильтрованных по роли.
@@ -398,6 +411,36 @@ paths:
       summary: Обновление пользователя
       tags:
       - Users
+  /users/{id}/ban:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
+      summary: Временная блокировка пользователя
+      tags:
+      - Users
   /users/{id}/role:
     patch:
       consumes:
@@ -435,6 +478,56 @@ paths:
       summary: Назначить роль пользователю
       tags:
       - Users
+  /users/{id}/unban:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.ResponseMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
+      summary: Разблокировка пользователя
+      tags:
+      - Users
+  /users/activity:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.ActivityLog'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - UserID: []
+      summary: Получить логи активности
+      tags:
+      - Activity
 securityDefinitions:
   UserID:
     in: header

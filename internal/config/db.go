@@ -44,6 +44,7 @@ func InitDB() {
 	err = db.AutoMigrate(
 		&models.User{},
 		&models.Group{},
+		&models.ActivityLog{},
 	)
 	if err != nil {
 		log.Fatal("Ошибка миграции: ", err)

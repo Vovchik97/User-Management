@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"userManagement/internal/config"
 	"userManagement/internal/models"
+	"userManagement/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,6 +37,10 @@ func CreateUser(c *gin.Context) {
 	if err := config.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusBadRequest, ResponseError{Message: "Не удалось создать пользователя"})
 		return
+	}
+
+	if userID, exists := c.Get("userID"); exists {
+		utils.LogAction(userID.(uint), fmt.Sprintf("Создан пользователь: %s", user.Name))
 	}
 
 	c.JSON(http.StatusCreated, user)
@@ -84,16 +90,39 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Получаем текущего пользователя из контекста
+	currentUserRaw, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Необходима авторизация"})
+		return
+	}
+	currentUser := currentUserRaw.(models.User)
+
+	// Проверка прав доступа:
+	// Если текущий пользователь не является администратором или модератором, он не может редактировать чужие данные
+	if currentUser.ID != user.ID && currentUser.Role != "admin" && currentUser.Role != "moderator" {
+		c.JSON(http.StatusForbidden, ResponseError{Message: "Недостаточно прав для реадктирования других пользователей"})
+		return
+	}
+
 	var input UpdateUserInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 		return
 	}
 
-	config.DB.Model(&user).Updates(models.User{
+	// Обновляем данные пользователя
+	if err := config.DB.Model(&user).Updates(models.User{
 		Name:  input.Name,
 		Email: input.Email,
-	})
+	}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось обновить данные пользователя"})
+		return
+	}
+
+	if userID, exists := c.Get("userID"); exists {
+		utils.LogAction(userID.(uint), fmt.Sprintf("Обновлен пользователь: %s", user.Name))
+	}
 
 	c.JSON(http.StatusOK, user)
 }
@@ -115,6 +144,10 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	config.DB.Unscoped().Delete(&user)
+
+	if userId, exists := c.Get("userID"); exists {
+		utils.LogAction(userId.(uint), fmt.Sprintf("Удален пользователь: %s", user.Name))
+	}
 
 	c.JSON(http.StatusOK, ResponseError{Message: "Пользователь удален"})
 }
@@ -145,8 +178,92 @@ func UpdateUserRole(c *gin.Context) {
 		return
 	}
 
+	oldRole := user.Role
 	user.Role = input.Role
 	config.DB.Save(&user)
 
+	if userID, exists := c.Get("userID"); exists {
+		utils.LogAction(userID.(uint), fmt.Sprintf("Обновлена роль пользователя %s: %s -> %s", user.Name, oldRole, user.Role))
+	}
+
 	c.JSON(http.StatusOK, user)
+}
+
+// BanUser godoc
+// @Summary Временная блокировка пользователя
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path int true "ID пользователя"
+// @Success 200 {object} ResponseMessage
+// @Failure 400 {object} ResponseError
+// @Failure 403 {object} ResponseError
+// @Router /users/{id}/ban [patch]
+// @Security UserID
+func BanUser(c *gin.Context) {
+	userID := c.Param("id")
+
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
+		return
+	}
+
+	// Проверяяем, что пользователь не заблокирован
+	if user.IsBanned {
+		c.JSON(http.StatusBadRequest, ResponseError{Message: "Пользователь уже заблокирован"})
+		return
+	}
+
+	user.IsBanned = true
+	if err := config.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось заблокировать пользователя"})
+		return
+	}
+
+	if adminID, exists := c.Get("userID"); exists {
+		utils.LogAction(adminID.(uint), fmt.Sprintf("Заблокировал пользователя %s", user.Name))
+	}
+
+	c.JSON(http.StatusOK, ResponseMessage{Message: "Пользователь заблокирован"})
+}
+
+// UnbanUser godoc
+// @Summary Разблокировка пользователя
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path int true "ID пользователя"
+// @Success 200 {object} ResponseMessage
+// @Failure 400 {object} ResponseError
+// @Failure 403 {object} ResponseError
+// @Router /users/{id}/unban [patch]
+// @Security UserID
+func UnbanUser(c *gin.Context) {
+	userID := c.Param("id")
+
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
+		return
+	}
+
+	// Проверяем, что пользователь не заблокирован
+	if !user.IsBanned {
+		c.JSON(http.StatusBadRequest, ResponseError{Message: "Пользователь не заблокирован"})
+		return
+	}
+
+	user.IsBanned = false
+	if err := config.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось разблокировать пользователя"})
+		return
+	}
+
+	// Логируем действие
+	if adminID, exists := c.Get("userID"); exists {
+		utils.LogAction(adminID.(uint), fmt.Sprintf("Разблокировал пользователя %s", user.Name))
+	}
+
+	c.JSON(http.StatusOK, ResponseMessage{Message: "Пользователь разблокирован"})
 }

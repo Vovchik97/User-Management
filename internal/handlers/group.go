@@ -1,16 +1,18 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"userManagement/internal/config"
 	"userManagement/internal/models"
+	"userManagement/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
 // CreateGroups godoc
 // @Summary Создание новой группы
-// @Tags groups
+// @Tags Groups
 // @Accept json
 // @Produce json
 // @Param group body GroupInput true "Название группы"
@@ -30,12 +32,17 @@ func CreateGroups(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось создать группу"})
 		return
 	}
+
+	if userID, exists := c.Get("userID"); exists {
+		utils.LogAction(userID.(uint), fmt.Sprintf("Создана группа: %s", group.Name))
+	}
+
 	c.JSON(http.StatusCreated, group)
 }
 
 // GetGroups godoc
 // @Summary Получение списка всех групп
-// @Tags groups
+// @Tags Groups
 // @Produce json
 // @Success 200 {array} models.Group
 // @Failure 403 {object} ResponseError
@@ -55,7 +62,7 @@ func GetGroups(c *gin.Context) {
 
 // UpdateGroup godoc
 // @Summary Обновление названия группы
-// @Tags groups
+// @Tags Groups
 // @Accept json
 // @Produce json
 // @Param id path int true "ID группы"
@@ -79,14 +86,20 @@ func UpdateGroup(c *gin.Context) {
 		return
 	}
 
+	oldName := group.Name
 	group.Name = input.Name
 	config.DB.Save(&group)
+
+	if userID, exists := c.Get("userID"); exists {
+		utils.LogAction(userID.(uint), fmt.Sprintf("Обновлена группа: %s -> %s", oldName, group.Name))
+	}
+
 	c.JSON(http.StatusOK, group)
 }
 
 // DeleteGroup godoc
 // @Summary Удаление группы
-// @Tags groups
+// @Tags Groups
 // @Produce json
 // @Param id path int true "ID группы"
 // @Success 200 {object} ResponseMessage
@@ -95,16 +108,24 @@ func UpdateGroup(c *gin.Context) {
 // @Security UserID
 func DeleteGroup(c *gin.Context) {
 	id := c.Param("id")
-	if err := config.DB.Unscoped().Delete(&models.Group{}, id).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Группа не найдена"})
+	var group models.Group
+	if err := config.DB.First(&group, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, ResponseError{Message: "Группа не найдена"})
 		return
 	}
+
+	config.DB.Unscoped().Delete(&group)
+
+	if userID, exists := c.Get("userID"); exists {
+		utils.LogAction(userID.(uint), fmt.Sprintf("Удалил группу %s", group.Name))
+	}
+
 	c.JSON(http.StatusOK, ResponseError{Message: "Группа успешно удалена"})
 }
 
 // AddUserToGroup godoc
 // @Summary Добавление пользователя в группу
-// @Tags groups
+// @Tags Groups
 // @Accept json
 // @Produce json
 // @Param id path int true "ID группы"
@@ -142,12 +163,16 @@ func AddUserToGroup(c *gin.Context) {
 		return
 	}
 
+	if userID, exists := c.Get("userID"); exists {
+		utils.LogAction(userID.(uint), fmt.Sprintf("Добавлен пользователь %s в группу %s", user.Name, group.Name))
+	}
+
 	c.JSON(http.StatusOK, ResponseError{Message: "Пользователь добавлен в группу"})
 }
 
 // RemoveUserFromGroup godoc
 // @Summary Удаление пользователя из группы
-// @Tags groups
+// @Tags Groups
 // @Produce json
 // @Param id path int true "ID группы"
 // @Param user_id path int true "ID пользователя"
@@ -157,24 +182,30 @@ func AddUserToGroup(c *gin.Context) {
 // @Router /groups/{id}/users/{user_id} [delete]
 // @Security UserID
 func RemoveUserFromGroup(c *gin.Context) {
-	groupID := c.Param("id")
-	userID := c.Param("user_id")
+	groupId := c.Param("id")
+	userId := c.Param("user_id")
 
 	var group models.Group
-	if err := config.DB.Preload("Users").First(&group, groupID).Error; err != nil {
+	if err := config.DB.Preload("Users").First(&group, groupId).Error; err != nil {
 		c.JSON(http.StatusNotFound, ResponseError{Message: "Группа не найдена"})
 		return
 	}
 
 	var user models.User
-	if err := config.DB.First(&user, userID).Error; err != nil {
+	if err := config.DB.First(&user, userId).Error; err != nil {
 		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
 		return
 	}
 
-	// Проверяем, состоит ли пользователь в группе
-	var groupUser models.Group
-	if err := config.DB.Where("group_id = ? AND user_id = ?", group.ID, user.ID).First(&groupUser).Error; err != nil {
+	// Проверка: состоит ли пользователь в группе
+	found := false
+	for _, u := range group.Users {
+		if u.ID == user.ID {
+			found = true
+			break
+		}
+	}
+	if !found {
 		c.JSON(http.StatusBadRequest, ResponseError{Message: "Пользователь не состоит в группе"})
 		return
 	}
@@ -182,6 +213,10 @@ func RemoveUserFromGroup(c *gin.Context) {
 	if err := config.DB.Model(&group).Association("Users").Unscoped().Delete(&user); err != nil {
 		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось удалить пользователя из группы"})
 		return
+	}
+
+	if userID, exists := c.Get("userID"); exists {
+		utils.LogAction(userID.(uint), fmt.Sprintf("Удален пользователь %s из группы %s", user.Name, group.Name))
 	}
 
 	c.JSON(http.StatusOK, ResponseError{Message: "Пользователь удален из группы"})

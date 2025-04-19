@@ -34,7 +34,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "groups"
+                    "Groups"
                 ],
                 "summary": "Получение списка всех групп",
                 "responses": {
@@ -68,7 +68,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "groups"
+                    "Groups"
                 ],
                 "summary": "Создание новой группы",
                 "parameters": [
@@ -118,7 +118,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "groups"
+                    "Groups"
                 ],
                 "summary": "Обновление названия группы",
                 "parameters": [
@@ -170,7 +170,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "groups"
+                    "Groups"
                 ],
                 "summary": "Удаление группы",
                 "parameters": [
@@ -212,7 +212,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "groups"
+                    "Groups"
                 ],
                 "summary": "Добавление пользователя в группу",
                 "parameters": [
@@ -266,7 +266,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "groups"
+                    "Groups"
                 ],
                 "summary": "Удаление пользователя из группы",
                 "parameters": [
@@ -392,6 +392,39 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/activity": {
+            "get": {
+                "security": [
+                    {
+                        "UserID": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Activity"
+                ],
+                "summary": "Получить логи активности",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.ActivityLog"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}": {
             "put": {
                 "security": [
@@ -485,6 +518,54 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{id}/ban": {
+            "patch": {
+                "security": [
+                    {
+                        "UserID": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Временная блокировка пользователя",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseMessage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}/role": {
             "patch": {
                 "security": [
@@ -536,6 +617,54 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}/unban": {
+            "patch": {
+                "security": [
+                    {
+                        "UserID": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Разблокировка пользователя",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID пользователя",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseMessage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/handlers.ResponseError"
                         }
@@ -633,6 +762,23 @@ const docTemplate = `{
                 }
             }
         },
+        "models.ActivityLog": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.Group": {
             "type": "object",
             "properties": {
@@ -676,6 +822,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "is_banned": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"

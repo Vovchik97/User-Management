@@ -24,6 +24,10 @@ func Authorize(allowedRoles ...string) gin.HandlerFunc {
 			return
 		}
 
+		// Добавляем userID в контекст, чтобы логгирование работало
+		c.Set("userID", user.ID)
+		c.Set("currentUser", user)
+
 		for _, role := range allowedRoles {
 			if user.Role == role {
 				c.Set("currentUser", user)
