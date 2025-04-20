@@ -8,14 +8,16 @@ import (
 
 func RegisterGroupRoutes(r *gin.Engine) {
 	groups := r.Group("/groups")
+	groups.Use(middleware.JWTAuthMiddleware())
+	{
+		// Создание, обновление и удаление групп
+		groups.POST("/", middleware.Authorize("admin", "moderator"), handlers.CreateGroups)
+		groups.GET("/", middleware.Authorize("admin", "moderator"), handlers.GetGroups)
+		groups.PUT("/:id", middleware.Authorize("admin", "moderator"), handlers.UpdateGroup)
+		groups.DELETE("/:id", middleware.Authorize("admin", "moderator"), handlers.DeleteGroup)
 
-	// Создание, обновление и удаление групп — только для админа
-	groups.POST("/", middleware.Authorize("admin"), handlers.CreateGroups)
-	groups.GET("/", middleware.Authorize("admin"), handlers.GetGroups)
-	groups.PUT("/:id", middleware.Authorize("admin"), handlers.UpdateGroup)
-	groups.DELETE("/:id", middleware.Authorize("admin"), handlers.DeleteGroup)
-
-	// Управление участниками группы — для админа и модератора
-	groups.POST("/:id/users", middleware.Authorize("admin", "moderator"), handlers.AddUserToGroup)
-	groups.DELETE("/:id/users/:user_id", middleware.Authorize("admin", "moderator"), handlers.RemoveUserFromGroup)
+		// Управление участниками группы
+		groups.POST("/:id/users", middleware.Authorize("admin", "moderator"), handlers.AddUserToGroup)
+		groups.DELETE("/:id/users/:user_id", middleware.Authorize("admin", "moderator"), handlers.RemoveUserFromGroup)
+	}
 }

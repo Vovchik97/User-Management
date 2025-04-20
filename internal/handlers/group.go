@@ -20,7 +20,7 @@ import (
 // @Failure 400 {object} ResponseError
 // @Failure 403 {object} ResponseError
 // @Router /groups [post]
-// @Security UserID
+// @Security BearerAuth
 func CreateGroups(c *gin.Context) {
 	var group models.Group
 	if err := c.ShouldBindJSON(&group); err != nil {
@@ -47,7 +47,7 @@ func CreateGroups(c *gin.Context) {
 // @Success 200 {array} models.Group
 // @Failure 403 {object} ResponseError
 // @Router /groups [get]
-// @Security UserID
+// @Security BearerAuth
 func GetGroups(c *gin.Context) {
 	var groups []models.Group
 
@@ -71,7 +71,7 @@ func GetGroups(c *gin.Context) {
 // @Failure 400 {object} ResponseError
 // @Failure 403 {object} ResponseError
 // @Router /groups/{id} [put]
-// @Security UserID
+// @Security BearerAuth
 func UpdateGroup(c *gin.Context) {
 	id := c.Param("id")
 	var group models.Group
@@ -105,7 +105,7 @@ func UpdateGroup(c *gin.Context) {
 // @Success 200 {object} ResponseMessage
 // @Failure 403 {object} ResponseError
 // @Router /groups/{id} [delete]
-// @Security UserID
+// @Security BearerAuth
 func DeleteGroup(c *gin.Context) {
 	id := c.Param("id")
 	var group models.Group
@@ -134,7 +134,7 @@ func DeleteGroup(c *gin.Context) {
 // @Failure 400 {object} ResponseError
 // @Failure 403 {object} ResponseError
 // @Router /groups/{id}/users [post]
-// @Security UserID
+// @Security BearerAuth
 func AddUserToGroup(c *gin.Context) {
 	groupID := c.Param("id")
 	var input struct {
@@ -180,7 +180,7 @@ func AddUserToGroup(c *gin.Context) {
 // @Failure 400 {object} ResponseError
 // @Failure 403 {object} ResponseError
 // @Router /groups/{id}/users/{user_id} [delete]
-// @Security UserID
+// @Security BearerAuth
 func RemoveUserFromGroup(c *gin.Context) {
 	groupId := c.Param("id")
 	userId := c.Param("user_id")

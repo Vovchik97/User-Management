@@ -11,8 +11,11 @@ import (
 	"gorm.io/gorm"
 )
 
-// Глобальная переменная для хранения подключения к БД
-var DB *gorm.DB
+// Глобальные переменные
+var (
+	DB        *gorm.DB
+	JWTSecret []byte
+)
 
 // Инициализируем подключение к БД
 func InitDB() {
@@ -20,6 +23,9 @@ func InitDB() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Ошибка загрузки .env файла: ")
 	}
+
+	// Загружаем JWT из .ENV
+	JWTSecret = []byte(os.Getenv("JWT_SECRET"))
 
 	// Формируем строку подключения к БД с параметрами из .ENV
 	dsn := fmt.Sprintf(

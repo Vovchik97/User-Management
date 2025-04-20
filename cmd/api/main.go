@@ -14,9 +14,10 @@ package main
 // @host      localhost:8080
 // @BasePath  /
 
-// @securityDefinitions.apikey UserID
+// @securityDefinitions.apikey BearerAuth
 // @in header
-// @name X-User-ID
+// @name Authorization
+// @description Введите токен в формате: Bearer <your-token>
 import (
 	"userManagement/internal/config"
 	"userManagement/internal/routes"

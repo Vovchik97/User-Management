@@ -14,3 +14,8 @@ type UpdateUserInput struct {
 type UpdateUserRoleInput struct {
 	Role string `json:"role" binding:"required,oneof=admin moderator user"`
 }
+
+type UserInfo struct {
+	ID   uint
+	Role string
+}

@@ -23,11 +23,101 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/login": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Вход пользователя в систему",
+                "parameters": [
+                    {
+                        "description": "Данные для входа",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.LoginInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JWT токен",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка при валидации данных",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    },
+                    "401": {
+                        "description": "Неверный email или пароль",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Регистрация нового пользователя",
+                "parameters": [
+                    {
+                        "description": "Регистрационные данные",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RegisterInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Регистрация прошла успешно",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseMessage"
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка при валидации данных",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка при хешировании пароля или сохранении данных",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
         "/groups": {
             "get": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "produces": [
@@ -58,7 +148,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "consumes": [
@@ -108,7 +198,7 @@ const docTemplate = `{
             "put": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "consumes": [
@@ -163,7 +253,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "produces": [
@@ -202,7 +292,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "consumes": [
@@ -259,7 +349,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "produces": [
@@ -311,7 +401,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Получение списка всех пользователей или отфильтрованных по роли.",
@@ -351,7 +441,7 @@ const docTemplate = `{
             "post": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Создание нового пользователя с указанием имени, email, пароля и роли.",
@@ -396,7 +486,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "produces": [
@@ -425,11 +515,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Получение профиля текущего пользователя",
+                "responses": {
+                    "200": {
+                        "description": "Профиль пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Неавторизованный доступ",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    },
+                    "404": {
+                        "description": "Пользователь не найден",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}": {
             "put": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Обновление данных пользователя по его ID.",
@@ -485,7 +614,7 @@ const docTemplate = `{
             "delete": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Удаление пользователя по его ID.",
@@ -522,7 +651,7 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "consumes": [
@@ -570,7 +699,7 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Обновление роли пользователя по ID",
@@ -628,7 +757,7 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "UserID": []
+                        "BearerAuth": []
                     }
                 ],
                 "consumes": [
@@ -674,6 +803,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handlers.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "handlers.CreateUserInput": {
             "type": "object",
             "required": [
@@ -702,6 +839,42 @@ const docTemplate = `{
             "properties": {
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "handlers.LoginInput": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6
+                }
+            }
+        },
+        "handlers.RegisterInput": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6
                 }
             }
         },
@@ -804,9 +977,6 @@ const docTemplate = `{
         },
         "models.User": {
             "type": "object",
-            "required": [
-                "email"
-            ],
             "properties": {
                 "created_at": {
                     "type": "string"
@@ -839,9 +1009,10 @@ const docTemplate = `{
         }
     },
     "securityDefinitions": {
-        "UserID": {
+        "BearerAuth": {
+            "description": "Введите токен в формате: Bearer \u003cyour-token\u003e",
             "type": "apiKey",
-            "name": "X-User-ID",
+            "name": "Authorization",
             "in": "header"
         }
     }

@@ -11,7 +11,7 @@ import (
 // GetActivityLogs godoc
 // @Summary      Получить логи активности
 // @Tags         Activity
-// @Security     UserID
+// @Security     BearerAuth
 // @Produce      json
 // @Success      200 {array} models.ActivityLog
 // @Failure      401 {object} ResponseError

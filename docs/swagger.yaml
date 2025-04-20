@@ -1,5 +1,10 @@
 basePath: /
 definitions:
+  handlers.AuthResponse:
+    properties:
+      token:
+        type: string
+    type: object
   handlers.CreateUserInput:
     properties:
       email:
@@ -20,6 +25,31 @@ definitions:
         type: string
     required:
     - name
+    type: object
+  handlers.LoginInput:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.RegisterInput:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
     type: object
   handlers.ResponseError:
     properties:
@@ -104,8 +134,6 @@ definitions:
         type: string
       updated_at:
         type: string
-    required:
-    - email
     type: object
 host: localhost:8080
 info:
@@ -120,6 +148,64 @@ info:
   title: User Management API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT токен
+          schema:
+            $ref: '#/definitions/handlers.AuthResponse'
+        "400":
+          description: Ошибка при валидации данных
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "401":
+          description: Неверный email или пароль
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      summary: Вход пользователя в систему
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Регистрационные данные
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Регистрация прошла успешно
+          schema:
+            $ref: '#/definitions/handlers.ResponseMessage'
+        "400":
+          description: Ошибка при валидации данных
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "500":
+          description: Ошибка при хешировании пароля или сохранении данных
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      summary: Регистрация нового пользователя
+      tags:
+      - Auth
   /groups:
     get:
       produces:
@@ -136,7 +222,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Получение списка всех групп
       tags:
       - Groups
@@ -166,7 +252,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Создание новой группы
       tags:
       - Groups
@@ -190,7 +276,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Удаление группы
       tags:
       - Groups
@@ -225,7 +311,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Обновление названия группы
       tags:
       - Groups
@@ -261,7 +347,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Добавление пользователя в группу
       tags:
       - Groups
@@ -294,7 +380,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Удаление пользователя из группы
       tags:
       - Groups
@@ -320,7 +406,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Получение списка пользователей
       tags:
       - Users
@@ -348,7 +434,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Создание нового пользователя
       tags:
       - Users
@@ -371,7 +457,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Удаление пользователя
       tags:
       - Users
@@ -407,7 +493,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Обновление пользователя
       tags:
       - Users
@@ -437,7 +523,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Временная блокировка пользователя
       tags:
       - Users
@@ -474,7 +560,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Назначить роль пользователю
       tags:
       - Users
@@ -504,7 +590,7 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Разблокировка пользователя
       tags:
       - Users
@@ -524,13 +610,38 @@ paths:
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:
-      - UserID: []
+      - BearerAuth: []
       summary: Получить логи активности
       tags:
       - Activity
+  /users/me:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Профиль пользователя
+          schema:
+            $ref: '#/definitions/models.User'
+        "401":
+          description: Неавторизованный доступ
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "404":
+          description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+      security:
+      - BearerAuth: []
+      summary: Получение профиля текущего пользователя
+      tags:
+      - Users
 securityDefinitions:
-  UserID:
+  BearerAuth:
+    description: 'Введите токен в формате: Bearer <your-token>'
     in: header
-    name: X-User-ID
+    name: Authorization
     type: apiKey
 swagger: "2.0"

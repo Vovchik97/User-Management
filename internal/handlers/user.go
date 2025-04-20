@@ -14,7 +14,7 @@ import (
 // @Summary Создание нового пользователя
 // @Description Создание нового пользователя с указанием имени, email, пароля и роли.
 // @Tags Users
-// @Security UserID
+// @Security BearerAuth
 // @Accept  json
 // @Produce  json
 // @Param input body CreateUserInput true "Параметры пользователя"
@@ -28,10 +28,17 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
+	// Хешируем пароль
+	hashedPassword, errPassword := utils.HashPassword(input.Password)
+	if errPassword != nil {
+		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Ошибка при хешировании пароля"})
+		return
+	}
+
 	user := models.User{
-		Name:     input.Name,
-		Email:    input.Email,
-		Password: input.Password,
+		Name:         input.Name,
+		Email:        input.Email,
+		PasswordHash: hashedPassword,
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
@@ -39,8 +46,9 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	if userID, exists := c.Get("userID"); exists {
-		utils.LogAction(userID.(uint), fmt.Sprintf("Создан пользователь: %s", user.Name))
+	if currentUser, exists := c.Get("currentUser"); exists {
+		userInfo := currentUser.(UserInfo)
+		utils.LogAction(userInfo.ID, fmt.Sprintf("Создал пользователя: %s", user.Name))
 	}
 
 	c.JSON(http.StatusCreated, user)
@@ -50,13 +58,19 @@ func CreateUser(c *gin.Context) {
 // @Summary Получение списка пользователей
 // @Description Получение списка всех пользователей или отфильтрованных по роли.
 // @Tags Users
-// @Security UserID
+// @Security BearerAuth
 // @Produce  json
 // @Param role query string false "Роль пользователя"
 // @Success 200 {array} models.User
 // @Failure 500 {object} ResponseError "Ошибка при получении списка пользователей"
 // @Router /users [get]
 func GetUsers(c *gin.Context) {
+	_, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Необходима авторизация"})
+		return
+	}
+
 	role := c.Query("role")
 	var users []models.User
 
@@ -65,7 +79,10 @@ func GetUsers(c *gin.Context) {
 		query = query.Where("role = ?", role)
 	}
 
-	query.Find(&users)
+	if err := query.Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Ошибка при получении списка пользователей"})
+		return
+	}
 
 	c.JSON(http.StatusOK, users)
 }
@@ -74,7 +91,7 @@ func GetUsers(c *gin.Context) {
 // @Summary Обновление пользователя
 // @Description Обновление данных пользователя по его ID.
 // @Tags Users
-// @Security UserID
+// @Security BearerAuth
 // @Accept  json
 // @Produce  json
 // @Param id path int true "ID пользователя"
@@ -84,19 +101,22 @@ func GetUsers(c *gin.Context) {
 // @Failure 404 {object} ResponseError "Пользователь не найден"
 // @Router /users/{id} [put]
 func UpdateUser(c *gin.Context) {
-	var user models.User
-	if err := config.DB.First(&user, c.Param("id")).Error; err != nil {
-		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
-		return
-	}
-
-	// Получаем текущего пользователя из контекста
 	currentUserRaw, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Необходима авторизация"})
 		return
 	}
-	currentUser := currentUserRaw.(models.User)
+	userInfo := currentUserRaw.(UserInfo)
+	currentUser := models.User{
+		ID:   userInfo.ID,
+		Role: userInfo.Role,
+	}
+
+	var user models.User
+	if err := config.DB.First(&user, c.Param("id")).Error; err != nil {
+		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
+		return
+	}
 
 	// Проверка прав доступа:
 	// Если текущий пользователь не является администратором или модератором, он не может редактировать чужие данные
@@ -120,9 +140,7 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if userID, exists := c.Get("userID"); exists {
-		utils.LogAction(userID.(uint), fmt.Sprintf("Обновлен пользователь: %s", user.Name))
-	}
+	utils.LogAction(currentUser.ID, fmt.Sprintf("Обновил пользователя: %s", user.Name))
 
 	c.JSON(http.StatusOK, user)
 }
@@ -131,12 +149,23 @@ func UpdateUser(c *gin.Context) {
 // @Summary Удаление пользователя
 // @Description Удаление пользователя по его ID.
 // @Tags Users
-// @Security UserID
+// @Security BearerAuth
 // @Param id path int true "ID пользователя"
 // @Success 200 {object} ResponseError "Пользователь удален"
 // @Failure 404 {object} ResponseError "Пользователь не найден"
 // @Router /users/{id} [delete]
 func DeleteUser(c *gin.Context) {
+	currentUserRaw, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Необходима авторизация"})
+		return
+	}
+	userInfo := currentUserRaw.(UserInfo)
+	currentUser := models.User{
+		ID:   userInfo.ID,
+		Role: userInfo.Role,
+	}
+
 	var user models.User
 	if err := config.DB.First(&user, c.Param("id")).Error; err != nil {
 		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
@@ -145,9 +174,7 @@ func DeleteUser(c *gin.Context) {
 
 	config.DB.Unscoped().Delete(&user)
 
-	if userId, exists := c.Get("userID"); exists {
-		utils.LogAction(userId.(uint), fmt.Sprintf("Удален пользователь: %s", user.Name))
-	}
+	utils.LogAction(currentUser.ID, fmt.Sprintf("Удалил пользователя: %s", user.Name))
 
 	c.JSON(http.StatusOK, ResponseError{Message: "Пользователь удален"})
 }
@@ -156,7 +183,7 @@ func DeleteUser(c *gin.Context) {
 // @Summary Назначить роль пользователю
 // @Description Обновление роли пользователя по ID
 // @Tags Users
-// @Security UserID
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "ID пользователя"
@@ -166,6 +193,17 @@ func DeleteUser(c *gin.Context) {
 // @Failure 404 {object} ResponseError "Пользователь не найден"
 // @Router /users/{id}/role [patch]
 func UpdateUserRole(c *gin.Context) {
+	currentUserRaw, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Необходима авторизация"})
+		return
+	}
+	userInfo := currentUserRaw.(UserInfo)
+	currentUser := models.User{
+		ID:   userInfo.ID,
+		Role: userInfo.Role,
+	}
+
 	var user models.User
 	if err := config.DB.First(&user, c.Param("id")).Error; err != nil {
 		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
@@ -182,9 +220,7 @@ func UpdateUserRole(c *gin.Context) {
 	user.Role = input.Role
 	config.DB.Save(&user)
 
-	if userID, exists := c.Get("userID"); exists {
-		utils.LogAction(userID.(uint), fmt.Sprintf("Обновлена роль пользователя %s: %s -> %s", user.Name, oldRole, user.Role))
-	}
+	utils.LogAction(currentUser.ID, fmt.Sprintf("Обновил роль пользователя %s: %s -> %s", user.Name, oldRole, user.Role))
 
 	c.JSON(http.StatusOK, user)
 }
@@ -199,12 +235,21 @@ func UpdateUserRole(c *gin.Context) {
 // @Failure 400 {object} ResponseError
 // @Failure 403 {object} ResponseError
 // @Router /users/{id}/ban [patch]
-// @Security UserID
+// @Security BearerAuth
 func BanUser(c *gin.Context) {
-	userID := c.Param("id")
+	currentUserRaw, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Необходима авторизация"})
+		return
+	}
+	userInfo := currentUserRaw.(UserInfo)
+	currentUser := models.User{
+		ID:   userInfo.ID,
+		Role: userInfo.Role,
+	}
 
 	var user models.User
-	if err := config.DB.First(&user, userID).Error; err != nil {
+	if err := config.DB.First(&user, c.Param("id")).Error; err != nil {
 		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
 		return
 	}
@@ -221,9 +266,7 @@ func BanUser(c *gin.Context) {
 		return
 	}
 
-	if adminID, exists := c.Get("userID"); exists {
-		utils.LogAction(adminID.(uint), fmt.Sprintf("Заблокировал пользователя %s", user.Name))
-	}
+	utils.LogAction(currentUser.ID, fmt.Sprintf("Заблокировал пользователя: %s", user.Name))
 
 	c.JSON(http.StatusOK, ResponseMessage{Message: "Пользователь заблокирован"})
 }
@@ -238,12 +281,21 @@ func BanUser(c *gin.Context) {
 // @Failure 400 {object} ResponseError
 // @Failure 403 {object} ResponseError
 // @Router /users/{id}/unban [patch]
-// @Security UserID
+// @Security BearerAuth
 func UnbanUser(c *gin.Context) {
-	userID := c.Param("id")
+	currentUserRaw, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Необходима авторизация"})
+		return
+	}
+	userInfo := currentUserRaw.(UserInfo)
+	currentUser := models.User{
+		ID:   userInfo.ID,
+		Role: userInfo.Role,
+	}
 
 	var user models.User
-	if err := config.DB.First(&user, userID).Error; err != nil {
+	if err := config.DB.First(&user, c.Param("id")).Error; err != nil {
 		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
 		return
 	}
@@ -261,9 +313,27 @@ func UnbanUser(c *gin.Context) {
 	}
 
 	// Логируем действие
-	if adminID, exists := c.Get("userID"); exists {
-		utils.LogAction(adminID.(uint), fmt.Sprintf("Разблокировал пользователя %s", user.Name))
-	}
+	utils.LogAction(currentUser.ID, fmt.Sprintf("Разблокировал пользователя: %s", user.Name))
 
 	c.JSON(http.StatusOK, ResponseMessage{Message: "Пользователь разблокирован"})
+}
+
+// GetProfile godoc
+// @Summary Получение профиля текущего пользователя
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Success 200 {object} models.User "Профиль пользователя"
+// @Failure 401 {object} ResponseError "Неавторизованный доступ"
+// @Failure 404 {object} ResponseError "Пользователь не найден"
+// @Router /users/me [get]
+// @Security BearerAuth
+func GetProfile(c *gin.Context) {
+	user, exists := c.Get("currentUser")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Пользователь не найден"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 }
