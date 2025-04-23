@@ -10,7 +10,8 @@ type User struct {
 	Name         string         `json:"name" gorm:"required"`
 	Email        string         `json:"email" gorm:"uniqueIndex;not null"`
 	PasswordHash string         `json:"-"`
-	Role         string         `json:"role" gorm:"default:user"`
+	RoleID       uint           `json:"role_id"`
+	Role         Role           `json:"role" gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	IsBanned     bool           `json:"is_banned" gorm:"default:false"`
 	Groups       []Group        `json:"groups" gorm:"many2many:group_users"`
 	CreatedAt    time.Time      `json:"created_at"`

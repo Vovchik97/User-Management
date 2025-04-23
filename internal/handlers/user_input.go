@@ -1,5 +1,7 @@
 package handlers
 
+import "userManagement/internal/models"
+
 type CreateUserInput struct {
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
@@ -12,10 +14,11 @@ type UpdateUserInput struct {
 }
 
 type UpdateUserRoleInput struct {
-	Role string `json:"role" binding:"required,oneof=admin moderator user"`
+	RoleName string `json:"role_name" binding:"required"`
 }
 
 type UserInfo struct {
-	ID   uint
-	Role string
+	ID     uint        `json:"id"`
+	RoleID uint        `json:"role_id"`
+	Role   models.Role `json:"role"`
 }

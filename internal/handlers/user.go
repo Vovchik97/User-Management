@@ -39,12 +39,16 @@ func CreateUser(c *gin.Context) {
 		Name:         input.Name,
 		Email:        input.Email,
 		PasswordHash: hashedPassword,
+		RoleID:       3,
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusBadRequest, ResponseError{Message: "Не удалось создать пользователя"})
 		return
 	}
+
+	// Загружаем роль для возвращаемого пользователя
+	config.DB.Preload("Role").First(&user, user.ID)
 
 	if currentUser, exists := c.Get("currentUser"); exists {
 		userInfo := currentUser.(UserInfo)
@@ -71,15 +75,22 @@ func GetUsers(c *gin.Context) {
 		return
 	}
 
-	role := c.Query("role")
+	roleName := c.Query("role")
 	var users []models.User
 
 	query := config.DB
-	if role != "" {
-		query = query.Where("role = ?", role)
+	if roleName != "" {
+		// Используем внешний ключ RoleID, а не строку
+		var role models.Role
+		if err := config.DB.Where("name = ?", roleName).First(&role).Error; err == nil {
+			query = query.Where("role_id = ?", role.ID)
+		} else {
+			c.JSON(http.StatusBadRequest, ResponseError{Message: "Роль не найдена"})
+			return
+		}
 	}
 
-	if err := query.Find(&users).Error; err != nil {
+	if err := query.Preload("Role").Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Ошибка при получении списка пользователей"})
 		return
 	}
@@ -120,7 +131,7 @@ func UpdateUser(c *gin.Context) {
 
 	// Проверка прав доступа:
 	// Если текущий пользователь не является администратором или модератором, он не может редактировать чужие данные
-	if currentUser.ID != user.ID && currentUser.Role != "admin" && currentUser.Role != "moderator" {
+	if currentUser.ID != user.ID && currentUser.Role.Name != "admin" && currentUser.Role.Name != "moderator" {
 		c.JSON(http.StatusForbidden, ResponseError{Message: "Недостаточно прав для реадктирования других пользователей"})
 		return
 	}
@@ -141,6 +152,9 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	utils.LogAction(currentUser.ID, fmt.Sprintf("Обновил пользователя: %s", user.Name))
+
+	// Подгружаем роль перед возвратом
+	config.DB.Preload("Role").First(&user, user.ID)
 
 	c.JSON(http.StatusOK, user)
 }
@@ -199,13 +213,9 @@ func UpdateUserRole(c *gin.Context) {
 		return
 	}
 	userInfo := currentUserRaw.(UserInfo)
-	currentUser := models.User{
-		ID:   userInfo.ID,
-		Role: userInfo.Role,
-	}
 
 	var user models.User
-	if err := config.DB.First(&user, c.Param("id")).Error; err != nil {
+	if err := config.DB.Preload("Role").First(&user, c.Param("id")).Error; err != nil {
 		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
 		return
 	}
@@ -216,11 +226,26 @@ func UpdateUserRole(c *gin.Context) {
 		return
 	}
 
-	oldRole := user.Role
-	user.Role = input.Role
-	config.DB.Save(&user)
+	// Найти роль по имени
+	var role models.Role
+	if err := config.DB.Where("name = ?", input.RoleName).First(&role).Error; err != nil {
+		c.JSON(http.StatusBadRequest, ResponseError{Message: "Указанная роль не найдена"})
+		return
+	}
 
-	utils.LogAction(currentUser.ID, fmt.Sprintf("Обновил роль пользователя %s: %s -> %s", user.Name, oldRole, user.Role))
+	oldRole := user.Role.Name
+	user.RoleID = role.ID
+	user.Role = role
+
+	if err := config.DB.Save(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось обновить роль пользователя"})
+		return
+	}
+
+	utils.LogAction(userInfo.ID, fmt.Sprintf("Обновил роль пользователя %s: %s -> %s", user.Name, oldRole, user.Role.Name))
+
+	// Подгружаем новую роль перед возвратом
+	config.DB.Preload("Role").First(&user, user.ID)
 
 	c.JSON(http.StatusOK, user)
 }
@@ -326,12 +351,21 @@ func UnbanUser(c *gin.Context) {
 // @Success 200 {object} models.User "Профиль пользователя"
 // @Failure 401 {object} ResponseError "Неавторизованный доступ"
 // @Failure 404 {object} ResponseError "Пользователь не найден"
+// @Failure 500 {object} ResponseError "Ошибка при получении профиля пользователя"
 // @Router /users/me [get]
 // @Security BearerAuth
 func GetProfile(c *gin.Context) {
-	user, exists := c.Get("currentUser")
+	currentUserRaw, exists := c.Get("currentUser")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Пользователь не найден"})
+		return
+	}
+
+	userInfo := currentUserRaw.(UserInfo)
+
+	var user models.User
+	if err := config.DB.Preload("Role").First(&user, userInfo.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Ошибка при получении профиля пользователя"})
 		return
 	}
 

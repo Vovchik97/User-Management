@@ -40,7 +40,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 
 		userID := uint(claims["userID"].(float64))
 		var user models.User
-		if err1 := config.DB.First(&user, userID).Error; err1 != nil {
+		if err1 := config.DB.Preload("Role").First(&user, userID).Error; err1 != nil {
 			c.JSON(http.StatusUnauthorized, handlers.ResponseError{Message: "Пользователь не найден"})
 			c.Abort()
 			return

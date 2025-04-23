@@ -17,7 +17,7 @@ func Authorize(allowedRoles ...string) gin.HandlerFunc {
 		}
 
 		for _, role := range allowedRoles {
-			if currentUser.(handlers.UserInfo).Role == role {
+			if currentUser.(handlers.UserInfo).Role.Name == role {
 				c.Next()
 				return
 			}

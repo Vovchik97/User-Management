@@ -39,6 +39,7 @@ func Register(c *gin.Context) {
 		Name:         input.Name,
 		Email:        input.Email,
 		PasswordHash: hashedPassword,
+		RoleID:       3,
 	}
 
 	if err1 := config.DB.Create(&user).Error; err1 != nil {

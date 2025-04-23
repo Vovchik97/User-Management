@@ -550,6 +550,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/handlers.ResponseError"
                         }
+                    },
+                    "500": {
+                        "description": "Ошибка при получении профиля пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResponseError"
+                        }
                     }
                 }
             }
@@ -911,16 +917,11 @@ const docTemplate = `{
         "handlers.UpdateUserRoleInput": {
             "type": "object",
             "required": [
-                "role"
+                "role_name"
             ],
             "properties": {
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "admin",
-                        "moderator",
-                        "user"
-                    ]
+                "role_name": {
+                    "type": "string"
                 }
             }
         },
@@ -975,6 +976,26 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Role": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.User"
+                    }
+                }
+            }
+        },
         "models.User": {
             "type": "object",
             "properties": {
@@ -1000,7 +1021,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
-                    "type": "string"
+                    "$ref": "#/definitions/models.Role"
+                },
+                "role_id": {
+                    "type": "integer"
                 },
                 "updated_at": {
                     "type": "string"

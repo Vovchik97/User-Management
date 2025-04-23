@@ -52,7 +52,7 @@ func GetGroups(c *gin.Context) {
 	var groups []models.Group
 
 	// Загружаем все группы, включая пользователей
-	if err := config.DB.Preload("Users").Find(&groups).Error; err != nil {
+	if err := config.DB.Preload("Users.Role").Find(&groups).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Ошибка при загрузке групп"})
 		return
 	}
@@ -108,13 +108,24 @@ func UpdateGroup(c *gin.Context) {
 // @Security BearerAuth
 func DeleteGroup(c *gin.Context) {
 	id := c.Param("id")
+
 	var group models.Group
 	if err := config.DB.First(&group, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, ResponseError{Message: "Группа не найдена"})
 		return
 	}
 
-	config.DB.Unscoped().Delete(&group)
+	// Удалить связи с пользователями
+	if err := config.DB.Model(&group).Association("Users").Clear(); err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось удалить связи с пользователями"})
+		return
+	}
+
+	// Удалить группу
+	if err := config.DB.Unscoped().Delete(&group).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось удалить группу"})
+		return
+	}
 
 	if userID, exists := c.Get("userID"); exists {
 		utils.LogAction(userID.(uint), fmt.Sprintf("Удалил группу %s", group.Name))

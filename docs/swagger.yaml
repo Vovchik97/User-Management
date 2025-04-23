@@ -72,14 +72,10 @@ definitions:
     type: object
   handlers.UpdateUserRoleInput:
     properties:
-      role:
-        enum:
-        - admin
-        - moderator
-        - user
+      role_name:
         type: string
     required:
-    - role
+    - role_name
     type: object
   handlers.UserGroupInput:
     properties:
@@ -114,6 +110,19 @@ definitions:
           $ref: '#/definitions/models.User'
         type: array
     type: object
+  models.Role:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      users:
+        items:
+          $ref: '#/definitions/models.User'
+        type: array
+    type: object
   models.User:
     properties:
       created_at:
@@ -131,7 +140,9 @@ definitions:
       name:
         type: string
       role:
-        type: string
+        $ref: '#/definitions/models.Role'
+      role_id:
+        type: integer
       updated_at:
         type: string
     type: object
@@ -631,6 +642,10 @@ paths:
             $ref: '#/definitions/handlers.ResponseError'
         "404":
           description: Пользователь не найден
+          schema:
+            $ref: '#/definitions/handlers.ResponseError'
+        "500":
+          description: Ошибка при получении профиля пользователя
           schema:
             $ref: '#/definitions/handlers.ResponseError'
       security:

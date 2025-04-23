@@ -2,13 +2,13 @@ package config
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"userManagement/internal/models"
-
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log"
+	"os"
+	"userManagement/internal/models"
+	"userManagement/internal/seed"
 )
 
 // Глобальные переменные
@@ -49,12 +49,15 @@ func InitDB() {
 	// Автоматическая миграция таблицы users
 	err = db.AutoMigrate(
 		&models.User{},
+		&models.Role{},
 		&models.Group{},
 		&models.ActivityLog{},
 	)
 	if err != nil {
 		log.Fatal("Ошибка миграции: ", err)
 	}
+
+	seed.SeedRoles(DB)
 
 	fmt.Println("Подключение к базе данных успешно! Миграция завершена.")
 }
