@@ -17,7 +17,7 @@ type clientData struct {
 var clients sync.Map
 
 const (
-	LimitRequestsPerMinute = 6
+	LimitRequestsPerMinute = 60
 )
 
 // RateLimiter — middleware для ограничения количества запросов

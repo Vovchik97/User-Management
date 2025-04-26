@@ -19,6 +19,7 @@ package main
 // @name Authorization
 // @description Введите токен в формате: Bearer <your-token>
 import (
+	"net/http"
 	"strings"
 	"userManagement/internal/config"
 	"userManagement/internal/middleware"
@@ -50,7 +51,9 @@ func main() {
 
 	// Подключаем Swagger
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.InstanceName("swagger"), ginSwagger.DocExpansion("none")))
-
+	r.GET("/docs", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
 	// Запуск сервера
 	r.Run(":8080")
 }
