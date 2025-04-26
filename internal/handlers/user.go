@@ -28,6 +28,8 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
+	input.Sanitize()
+
 	// Хешируем пароль
 	hashedPassword, errPassword := utils.HashPassword(input.Password)
 	if errPassword != nil {
@@ -141,6 +143,8 @@ func UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 		return
 	}
+
+	input.Sanitize()
 
 	// Обновляем данные пользователя
 	if err := config.DB.Model(&user).Updates(models.User{

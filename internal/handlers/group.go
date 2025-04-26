@@ -22,10 +22,16 @@ import (
 // @Router /groups [post]
 // @Security BearerAuth
 func CreateGroups(c *gin.Context) {
-	var group models.Group
-	if err := c.ShouldBindJSON(&group); err != nil {
+	var input GroupInput
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 		return
+	}
+
+	input.Sanitize()
+
+	group := models.Group{
+		Name: input.Name,
 	}
 
 	if err := config.DB.Create(&group).Error; err != nil {
@@ -80,11 +86,13 @@ func UpdateGroup(c *gin.Context) {
 		return
 	}
 
-	var input models.Group
+	var input GroupInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
 		return
 	}
+
+	input.Sanitize()
 
 	oldName := group.Name
 	group.Name = input.Name

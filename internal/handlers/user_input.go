@@ -1,6 +1,9 @@
 package handlers
 
-import "userManagement/internal/models"
+import (
+	"userManagement/internal/models"
+	"userManagement/internal/utils"
+)
 
 type CreateUserInput struct {
 	Name     string `json:"name" binding:"required"`
@@ -8,9 +11,20 @@ type CreateUserInput struct {
 	Password string `json:"password" binding:"required,min=6"`
 }
 
+func (i *CreateUserInput) Sanitize() {
+	i.Name = utils.SanitizeInput(i.Name)
+	i.Email = utils.SanitizeInput(i.Email)
+	i.Password = utils.SanitizeInput(i.Password)
+}
+
 type UpdateUserInput struct {
 	Name  string `json:"name" binding:"required"`
 	Email string `json:"email" binding:"omitempty,email"`
+}
+
+func (i *UpdateUserInput) Sanitize() {
+	i.Name = utils.SanitizeInput(i.Name)
+	i.Email = utils.SanitizeInput(i.Email)
 }
 
 type UpdateUserRoleInput struct {

@@ -19,7 +19,9 @@ package main
 // @name Authorization
 // @description Введите токен в формате: Bearer <your-token>
 import (
+	"strings"
 	"userManagement/internal/config"
+	"userManagement/internal/middleware"
 	"userManagement/internal/routes"
 
 	"github.com/gin-gonic/gin"
@@ -36,6 +38,13 @@ func main() {
 	// Создаём Gin-роутер
 	r := gin.Default()
 
+	r.Use(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/swagger") {
+			c.Next()
+			return
+		}
+		middleware.RateLimiter()(c)
+	})
 	// Подключаем все маршруты
 	routes.RegisterAllRoutes(r)
 
