@@ -58,6 +58,7 @@ func InitDB() {
 	}
 
 	seed.SeedRoles(DB)
+	seed.SeedAdmin(DB)
 
 	fmt.Println("Подключение к базе данных успешно! Миграция завершена.")
 }
