@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"userManagement/internal/config"
+	"userManagement/internal/dto"
 	"userManagement/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -14,14 +15,14 @@ import (
 // @Security     BearerAuth
 // @Produce      json
 // @Success      200 {array} models.ActivityLog
-// @Failure      401 {object} ResponseError
+// @Failure      401 {object} dto.ResponseError
 // @Router       /users/activity [get]
 func GetActivityLogs(c *gin.Context) {
 	var logs []models.ActivityLog
 
 	// Получаем логи из базы данных
 	if err := config.DB.Order("timestamp desc").Find(&logs).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось получить логи"})
+		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Не удалось получить логи"})
 		return
 	}
 

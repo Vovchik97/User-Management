@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 	"userManagement/internal/config"
+	"userManagement/internal/dto"
 	"userManagement/internal/models"
 	"userManagement/internal/utils"
 
@@ -17,21 +18,21 @@ import (
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param user body handlers.RegisterInput true "Регистрационные данные"
-// @Success 201 {object} ResponseMessage "Регистрация прошла успешно"
-// @Failure 400 {object} ResponseError "Ошибка при валидации данных"
-// @Failure 500 {object} ResponseError "Ошибка при хешировании пароля или сохранении данных"
+// @Param user body dto.RegisterInput true "Регистрационные данные"
+// @Success 201 {object} dto.ResponseMessage "Регистрация прошла успешно"
+// @Failure 400 {object} dto.ResponseError "Ошибка при валидации данных"
+// @Failure 500 {object} dto.ResponseError "Ошибка при хешировании пароля или сохранении данных"
 // @Router /auth/register [post]
 func Register(c *gin.Context) {
-	var input RegisterInput
+	var input dto.RegisterInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		c.JSON(http.StatusBadRequest, dto.ResponseError{Message: err.Error()})
 		return
 	}
 
-	hashedPassword, err := utils.HashPassword(input.Password)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Ошибка при хешировании пароля"})
+	hashedPassword, errPassword := utils.HashPassword(input.Password)
+	if errPassword != nil {
+		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Ошибка при хешировании пароля"})
 		return
 	}
 
@@ -39,15 +40,15 @@ func Register(c *gin.Context) {
 		Name:         input.Name,
 		Email:        input.Email,
 		PasswordHash: hashedPassword,
-		RoleID:       3,
+		RoleID:       3, // обычный пользователь
 	}
 
-	if err1 := config.DB.Create(&user).Error; err1 != nil {
-		c.JSON(http.StatusBadRequest, ResponseError{Message: "Не удалось зарегистрироваться"})
+	if err := config.DB.Create(&user).Error; err != nil {
+		c.JSON(http.StatusBadRequest, dto.ResponseError{Message: "Не удалось зарегистрироваться"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, ResponseMessage{Message: "Регистрация прошла успешно"})
+	c.JSON(http.StatusCreated, dto.ResponseMessage{Message: "Регистрация прошла успешно"})
 }
 
 // Login godoc
@@ -55,26 +56,26 @@ func Register(c *gin.Context) {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param login body handlers.LoginInput true "Данные для входа"
-// @Success 200 {object} AuthResponse "JWT токен"
-// @Failure 400 {object} ResponseError "Ошибка при валидации данных"
-// @Failure 401 {object} ResponseError "Неверный email или пароль"
+// @Param login body dto.LoginInput true "Данные для входа"
+// @Success 200 {object} dto.AuthResponse "JWT токен"
+// @Failure 400 {object} dto.ResponseError "Ошибка при валидации данных"
+// @Failure 401 {object} dto.ResponseError "Неверный email или пароль"
 // @Router /auth/login [post]
 func Login(c *gin.Context) {
-	var input LoginInput
+	var input dto.LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		c.JSON(http.StatusBadRequest, dto.ResponseError{Message: err.Error()})
 		return
 	}
 
 	var user models.User
 	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Неверный email или пароль"})
+		c.JSON(http.StatusUnauthorized, dto.ResponseError{Message: "Неверный email или пароль"})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, ResponseError{Message: "Неверный email или пароль"})
+		c.JSON(http.StatusUnauthorized, dto.ResponseError{Message: "Неверный email или пароль"})
 		return
 	}
 
@@ -87,9 +88,9 @@ func Login(c *gin.Context) {
 
 	tokenString, err := token.SignedString(config.JWTSecret)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Ошибка создания токена"})
+		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Ошибка создания токена"})
 		return
 	}
 
-	c.JSON(http.StatusOK, AuthResponse{Token: tokenString})
+	c.JSON(http.StatusOK, dto.AuthResponse{Token: tokenString})
 }

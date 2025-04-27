@@ -1,11 +1,11 @@
 basePath: /
 definitions:
-  handlers.AuthResponse:
+  dto.AuthResponse:
     properties:
       token:
         type: string
     type: object
-  handlers.CreateUserInput:
+  dto.CreateUserInput:
     properties:
       email:
         type: string
@@ -19,14 +19,14 @@ definitions:
     - name
     - password
     type: object
-  handlers.GroupInput:
+  dto.GroupInput:
     properties:
       name:
         type: string
     required:
     - name
     type: object
-  handlers.LoginInput:
+  dto.LoginInput:
     properties:
       email:
         type: string
@@ -37,7 +37,7 @@ definitions:
     - email
     - password
     type: object
-  handlers.RegisterInput:
+  dto.RegisterInput:
     properties:
       email:
         type: string
@@ -51,17 +51,17 @@ definitions:
     - name
     - password
     type: object
-  handlers.ResponseError:
+  dto.ResponseError:
     properties:
       message:
         type: string
     type: object
-  handlers.ResponseMessage:
+  dto.ResponseMessage:
     properties:
       message:
         type: string
     type: object
-  handlers.UpdateUserInput:
+  dto.UpdateUserInput:
     properties:
       email:
         type: string
@@ -70,14 +70,14 @@ definitions:
     required:
     - name
     type: object
-  handlers.UpdateUserRoleInput:
+  dto.UpdateUserRoleInput:
     properties:
       role_name:
         type: string
     required:
     - role_name
     type: object
-  handlers.UserGroupInput:
+  dto.UserGroupInput:
     properties:
       user_id:
         type: integer
@@ -169,22 +169,22 @@ paths:
         name: login
         required: true
         schema:
-          $ref: '#/definitions/handlers.LoginInput'
+          $ref: '#/definitions/dto.LoginInput'
       produces:
       - application/json
       responses:
         "200":
           description: JWT токен
           schema:
-            $ref: '#/definitions/handlers.AuthResponse'
+            $ref: '#/definitions/dto.AuthResponse'
         "400":
           description: Ошибка при валидации данных
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "401":
           description: Неверный email или пароль
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       summary: Вход пользователя в систему
       tags:
       - Auth
@@ -198,22 +198,22 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/handlers.RegisterInput'
+          $ref: '#/definitions/dto.RegisterInput'
       produces:
       - application/json
       responses:
         "201":
           description: Регистрация прошла успешно
           schema:
-            $ref: '#/definitions/handlers.ResponseMessage'
+            $ref: '#/definitions/dto.ResponseMessage'
         "400":
           description: Ошибка при валидации данных
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "500":
           description: Ошибка при хешировании пароля или сохранении данных
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       summary: Регистрация нового пользователя
       tags:
       - Auth
@@ -231,7 +231,7 @@ paths:
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Получение списка всех групп
@@ -246,22 +246,22 @@ paths:
         name: group
         required: true
         schema:
-          $ref: '#/definitions/handlers.GroupInput'
+          $ref: '#/definitions/dto.GroupInput'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/handlers.ResponseMessage'
+            $ref: '#/definitions/dto.ResponseMessage'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Создание новой группы
@@ -281,11 +281,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.ResponseMessage'
+            $ref: '#/definitions/dto.ResponseMessage'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Удаление группы
@@ -305,22 +305,22 @@ paths:
         name: group
         required: true
         schema:
-          $ref: '#/definitions/handlers.GroupInput'
+          $ref: '#/definitions/dto.GroupInput'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.ResponseMessage'
+            $ref: '#/definitions/dto.ResponseMessage'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Обновление названия группы
@@ -341,22 +341,22 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/handlers.UserGroupInput'
+          $ref: '#/definitions/dto.UserGroupInput'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.ResponseMessage'
+            $ref: '#/definitions/dto.ResponseMessage'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Добавление пользователя в группу
@@ -381,15 +381,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.ResponseMessage'
+            $ref: '#/definitions/dto.ResponseMessage'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Удаление пользователя из группы
@@ -415,7 +415,7 @@ paths:
         "500":
           description: Ошибка при получении списка пользователей
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Получение списка пользователей
@@ -432,7 +432,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/handlers.CreateUserInput'
+          $ref: '#/definitions/dto.CreateUserInput'
       produces:
       - application/json
       responses:
@@ -443,7 +443,7 @@ paths:
         "400":
           description: Ошибка при создании пользователя
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Создание нового пользователя
@@ -462,11 +462,11 @@ paths:
         "200":
           description: Пользователь удален
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "404":
           description: Пользователь не найден
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Удаление пользователя
@@ -487,7 +487,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/handlers.UpdateUserInput'
+          $ref: '#/definitions/dto.UpdateUserInput'
       produces:
       - application/json
       responses:
@@ -498,11 +498,11 @@ paths:
         "400":
           description: Ошибка при обновлении пользователя
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "404":
           description: Пользователь не найден
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Обновление пользователя
@@ -524,15 +524,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.ResponseMessage'
+            $ref: '#/definitions/dto.ResponseMessage'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Временная блокировка пользователя
@@ -554,7 +554,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/handlers.UpdateUserRoleInput'
+          $ref: '#/definitions/dto.UpdateUserRoleInput'
       produces:
       - application/json
       responses:
@@ -565,11 +565,11 @@ paths:
         "400":
           description: Неверный ввод
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "404":
           description: Пользователь не найден
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Назначить роль пользователю
@@ -591,15 +591,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.ResponseMessage'
+            $ref: '#/definitions/dto.ResponseMessage'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Разблокировка пользователя
@@ -619,7 +619,7 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Получить логи активности
@@ -639,15 +639,15 @@ paths:
         "401":
           description: Неавторизованный доступ
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "404":
           description: Пользователь не найден
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
         "500":
           description: Ошибка при получении профиля пользователя
           schema:
-            $ref: '#/definitions/handlers.ResponseError'
+            $ref: '#/definitions/dto.ResponseError'
       security:
       - BearerAuth: []
       summary: Получение профиля текущего пользователя

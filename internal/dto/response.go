@@ -1,4 +1,4 @@
-package handlers
+package dto
 
 // ResponseError - структура для ответа с ошибкой
 type ResponseError struct {
@@ -8,4 +8,9 @@ type ResponseError struct {
 // ResponseMessage - структура для ответа с данными
 type ResponseMessage struct {
 	Message string `json:"message"`
+}
+
+// AuthResponse структура для ответа при успешной аутентификации
+type AuthResponse struct {
+	Token string `json:"token"`
 }

@@ -1,10 +1,10 @@
-package handlers
+package dto
 
 import (
-	"userManagement/internal/models"
 	"userManagement/internal/utils"
 )
 
+// CreateUserInput используется для создания нового пользователя
 type CreateUserInput struct {
 	Name     string `json:"name" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
@@ -17,6 +17,7 @@ func (i *CreateUserInput) Sanitize() {
 	i.Password = utils.SanitizeInput(i.Password)
 }
 
+// UpdateUserInput используется для обновления информации о пользователе
 type UpdateUserInput struct {
 	Name  string `json:"name" binding:"required"`
 	Email string `json:"email" binding:"omitempty,email"`
@@ -27,12 +28,7 @@ func (i *UpdateUserInput) Sanitize() {
 	i.Email = utils.SanitizeInput(i.Email)
 }
 
+// UpdateUserRoleInput используется для обновления роли пользователя
 type UpdateUserRoleInput struct {
 	RoleName string `json:"role_name" binding:"required"`
-}
-
-type UserInfo struct {
-	ID     uint        `json:"id"`
-	RoleID uint        `json:"role_id"`
-	Role   models.Role `json:"role"`
 }

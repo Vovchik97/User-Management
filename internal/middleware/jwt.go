@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 	"userManagement/internal/config"
-	"userManagement/internal/handlers"
+	"userManagement/internal/dto"
 	"userManagement/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +15,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.JSON(http.StatusUnauthorized, handlers.ResponseError{Message: "Отсутствует токен авторизации"})
+			c.JSON(http.StatusUnauthorized, dto.ResponseError{Message: "Отсутствует токен авторизации"})
 			c.Abort()
 			return
 		}
@@ -26,28 +26,35 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, handlers.ResponseError{Message: "Невалидный токен"})
+			c.JSON(http.StatusUnauthorized, dto.ResponseError{Message: "Невалидный токен"})
 			c.Abort()
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			c.JSON(http.StatusUnauthorized, handlers.ResponseError{Message: "Некорректные данные в токене"})
+			c.JSON(http.StatusUnauthorized, dto.ResponseError{Message: "Некорректные данные в токене"})
 			c.Abort()
 			return
 		}
 
-		userID := uint(claims["userID"].(float64))
+		userIDFloat := claims["userID"].(float64)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, dto.ResponseError{Message: "Некорректный формат токена"})
+			c.Abort()
+			return
+		}
+		userID := uint(userIDFloat)
+
 		var user models.User
 		if err1 := config.DB.Preload("Role").First(&user, userID).Error; err1 != nil {
-			c.JSON(http.StatusUnauthorized, handlers.ResponseError{Message: "Пользователь не найден"})
+			c.JSON(http.StatusUnauthorized, dto.ResponseError{Message: "Пользователь не найден"})
 			c.Abort()
 			return
 		}
 
 		c.Set("userID", user.ID)
-		c.Set("currentUser", handlers.UserInfo{
+		c.Set("currentUser", dto.UserInfo{
 			ID:   user.ID,
 			Role: user.Role,
 		})

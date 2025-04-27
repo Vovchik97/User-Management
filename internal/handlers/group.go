@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"userManagement/internal/config"
+	"userManagement/internal/dto"
 	"userManagement/internal/models"
-	"userManagement/internal/utils"
-
-	"github.com/gin-gonic/gin"
+	"userManagement/internal/services"
 )
 
 // CreateGroups godoc
@@ -15,16 +15,16 @@ import (
 // @Tags Groups
 // @Accept json
 // @Produce json
-// @Param group body GroupInput true "Название группы"
-// @Success 201 {object} ResponseMessage
-// @Failure 400 {object} ResponseError
-// @Failure 403 {object} ResponseError
+// @Param group body dto.GroupInput true "Название группы"
+// @Success 201 {object} dto.ResponseMessage
+// @Failure 400 {object} dto.ResponseError
+// @Failure 403 {object} dto.ResponseError
 // @Router /groups [post]
 // @Security BearerAuth
 func CreateGroups(c *gin.Context) {
-	var input GroupInput
+	var input dto.GroupInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		c.JSON(http.StatusBadRequest, dto.ResponseError{Message: err.Error()})
 		return
 	}
 
@@ -35,12 +35,15 @@ func CreateGroups(c *gin.Context) {
 	}
 
 	if err := config.DB.Create(&group).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось создать группу"})
+		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Не удалось создать группу"})
 		return
 	}
 
 	if userID, exists := c.Get("userID"); exists {
-		utils.LogAction(userID.(uint), fmt.Sprintf("Создана группа: %s", group.Name))
+		err := services.LogAction(userID.(uint), fmt.Sprintf("Создана группа: %s", group.Name))
+		if err != nil {
+			fmt.Println("Ошибка при логировании действия:", err)
+		}
 	}
 
 	c.JSON(http.StatusCreated, group)
@@ -51,7 +54,7 @@ func CreateGroups(c *gin.Context) {
 // @Tags Groups
 // @Produce json
 // @Success 200 {array} models.Group
-// @Failure 403 {object} ResponseError
+// @Failure 403 {object} dto.ResponseError
 // @Router /groups [get]
 // @Security BearerAuth
 func GetGroups(c *gin.Context) {
@@ -59,7 +62,7 @@ func GetGroups(c *gin.Context) {
 
 	// Загружаем все группы, включая пользователей
 	if err := config.DB.Preload("Users.Role").Find(&groups).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Ошибка при загрузке групп"})
+		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Ошибка при загрузке групп"})
 		return
 	}
 
@@ -72,23 +75,23 @@ func GetGroups(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID группы"
-// @Param group body GroupInput true "Новое название"
-// @Success 200 {object} ResponseMessage
-// @Failure 400 {object} ResponseError
-// @Failure 403 {object} ResponseError
+// @Param group body dto.GroupInput true "Новое название"
+// @Success 200 {object} dto.ResponseMessage
+// @Failure 400 {object} dto.ResponseError
+// @Failure 403 {object} dto.ResponseError
 // @Router /groups/{id} [put]
 // @Security BearerAuth
 func UpdateGroup(c *gin.Context) {
 	id := c.Param("id")
 	var group models.Group
 	if err := config.DB.First(&group, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, ResponseError{Message: "Группа не найдена"})
+		c.JSON(http.StatusNotFound, dto.ResponseError{Message: "Группа не найдена"})
 		return
 	}
 
-	var input GroupInput
+	var input dto.GroupInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		c.JSON(http.StatusBadRequest, dto.ResponseError{Message: err.Error()})
 		return
 	}
 
@@ -99,7 +102,10 @@ func UpdateGroup(c *gin.Context) {
 	config.DB.Save(&group)
 
 	if userID, exists := c.Get("userID"); exists {
-		utils.LogAction(userID.(uint), fmt.Sprintf("Обновлена группа: %s -> %s", oldName, group.Name))
+		err := services.LogAction(userID.(uint), fmt.Sprintf("Обновлена группа: %s -> %s", oldName, group.Name))
+		if err != nil {
+			fmt.Println("Ошибка при логировании действия:", err)
+		}
 	}
 
 	c.JSON(http.StatusOK, group)
@@ -110,8 +116,8 @@ func UpdateGroup(c *gin.Context) {
 // @Tags Groups
 // @Produce json
 // @Param id path int true "ID группы"
-// @Success 200 {object} ResponseMessage
-// @Failure 403 {object} ResponseError
+// @Success 200 {object} dto.ResponseMessage
+// @Failure 403 {object} dto.ResponseError
 // @Router /groups/{id} [delete]
 // @Security BearerAuth
 func DeleteGroup(c *gin.Context) {
@@ -119,27 +125,30 @@ func DeleteGroup(c *gin.Context) {
 
 	var group models.Group
 	if err := config.DB.First(&group, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, ResponseError{Message: "Группа не найдена"})
+		c.JSON(http.StatusNotFound, dto.ResponseError{Message: "Группа не найдена"})
 		return
 	}
 
 	// Удалить связи с пользователями
 	if err := config.DB.Model(&group).Association("Users").Clear(); err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось удалить связи с пользователями"})
+		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Не удалось удалить связи с пользователями"})
 		return
 	}
 
 	// Удалить группу
 	if err := config.DB.Unscoped().Delete(&group).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось удалить группу"})
+		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Не удалось удалить группу"})
 		return
 	}
 
 	if userID, exists := c.Get("userID"); exists {
-		utils.LogAction(userID.(uint), fmt.Sprintf("Удалил группу %s", group.Name))
+		err := services.LogAction(userID.(uint), fmt.Sprintf("Удалил группу %s", group.Name))
+		if err != nil {
+			fmt.Println("Ошибка при логировании действия:", err)
+		}
 	}
 
-	c.JSON(http.StatusOK, ResponseError{Message: "Группа успешно удалена"})
+	c.JSON(http.StatusOK, dto.ResponseError{Message: "Группа успешно удалена"})
 }
 
 // AddUserToGroup godoc
@@ -148,10 +157,10 @@ func DeleteGroup(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "ID группы"
-// @Param user body UserGroupInput true "ID пользователя для добавления"
-// @Success 200 {object} ResponseMessage
-// @Failure 400 {object} ResponseError
-// @Failure 403 {object} ResponseError
+// @Param user body dto.UserGroupInput true "ID пользователя для добавления"
+// @Success 200 {object} dto.ResponseMessage
+// @Failure 400 {object} dto.ResponseError
+// @Failure 403 {object} dto.ResponseError
 // @Router /groups/{id}/users [post]
 // @Security BearerAuth
 func AddUserToGroup(c *gin.Context) {
@@ -161,32 +170,35 @@ func AddUserToGroup(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, ResponseError{Message: err.Error()})
+		c.JSON(http.StatusBadRequest, dto.ResponseError{Message: err.Error()})
 		return
 	}
 
 	var group models.Group
 	if err := config.DB.Preload("Users").First(&group, groupID).Error; err != nil {
-		c.JSON(http.StatusNotFound, ResponseError{Message: "Группа не найдена"})
+		c.JSON(http.StatusNotFound, dto.ResponseError{Message: "Группа не найдена"})
 		return
 	}
 
 	var user models.User
 	if err := config.DB.First(&user, input.UserID).Error; err != nil {
-		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
+		c.JSON(http.StatusNotFound, dto.ResponseError{Message: "Пользователь не найден"})
 		return
 	}
 
 	if err := config.DB.Model(&group).Association("Users").Append(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось добавить пользователя в группу"})
+		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Не удалось добавить пользователя в группу"})
 		return
 	}
 
 	if userID, exists := c.Get("userID"); exists {
-		utils.LogAction(userID.(uint), fmt.Sprintf("Добавлен пользователь %s в группу %s", user.Name, group.Name))
+		err := services.LogAction(userID.(uint), fmt.Sprintf("Добавлен пользователь %s в группу %s", user.Name, group.Name))
+		if err != nil {
+			fmt.Println("Ошибка при логировании действия:", err)
+		}
 	}
 
-	c.JSON(http.StatusOK, ResponseError{Message: "Пользователь добавлен в группу"})
+	c.JSON(http.StatusOK, dto.ResponseError{Message: "Пользователь добавлен в группу"})
 }
 
 // RemoveUserFromGroup godoc
@@ -195,9 +207,9 @@ func AddUserToGroup(c *gin.Context) {
 // @Produce json
 // @Param id path int true "ID группы"
 // @Param user_id path int true "ID пользователя"
-// @Success 200 {object} ResponseMessage
-// @Failure 400 {object} ResponseError
-// @Failure 403 {object} ResponseError
+// @Success 200 {object} dto.ResponseMessage
+// @Failure 400 {object} dto.ResponseError
+// @Failure 403 {object} dto.ResponseError
 // @Router /groups/{id}/users/{user_id} [delete]
 // @Security BearerAuth
 func RemoveUserFromGroup(c *gin.Context) {
@@ -206,13 +218,13 @@ func RemoveUserFromGroup(c *gin.Context) {
 
 	var group models.Group
 	if err := config.DB.Preload("Users").First(&group, groupId).Error; err != nil {
-		c.JSON(http.StatusNotFound, ResponseError{Message: "Группа не найдена"})
+		c.JSON(http.StatusNotFound, dto.ResponseError{Message: "Группа не найдена"})
 		return
 	}
 
 	var user models.User
 	if err := config.DB.First(&user, userId).Error; err != nil {
-		c.JSON(http.StatusNotFound, ResponseError{Message: "Пользователь не найден"})
+		c.JSON(http.StatusNotFound, dto.ResponseError{Message: "Пользователь не найден"})
 		return
 	}
 
@@ -225,18 +237,21 @@ func RemoveUserFromGroup(c *gin.Context) {
 		}
 	}
 	if !found {
-		c.JSON(http.StatusBadRequest, ResponseError{Message: "Пользователь не состоит в группе"})
+		c.JSON(http.StatusBadRequest, dto.ResponseError{Message: "Пользователь не состоит в группе"})
 		return
 	}
 
 	if err := config.DB.Model(&group).Association("Users").Unscoped().Delete(&user); err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseError{Message: "Не удалось удалить пользователя из группы"})
+		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Не удалось удалить пользователя из группы"})
 		return
 	}
 
 	if userID, exists := c.Get("userID"); exists {
-		utils.LogAction(userID.(uint), fmt.Sprintf("Удален пользователь %s из группы %s", user.Name, group.Name))
+		err := services.LogAction(userID.(uint), fmt.Sprintf("Удален пользователь %s из группы %s", user.Name, group.Name))
+		if err != nil {
+			fmt.Println("Ошибка при логировании действия:", err)
+		}
 	}
 
-	c.JSON(http.StatusOK, ResponseError{Message: "Пользователь удален из группы"})
+	c.JSON(http.StatusOK, dto.ResponseError{Message: "Пользователь удален из группы"})
 }

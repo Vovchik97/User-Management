@@ -3,7 +3,7 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"userManagement/internal/handlers"
+	"userManagement/internal/dto"
 )
 
 func Authorize(allowedRoles ...string) gin.HandlerFunc {
@@ -11,18 +11,18 @@ func Authorize(allowedRoles ...string) gin.HandlerFunc {
 		// Получаем информацию о текущем пользователе, которая была добавлена в контекст JWTAuthMiddleware
 		currentUser, exists := c.Get("currentUser")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, handlers.ResponseError{Message: "Пользователь не авторизован"})
+			c.JSON(http.StatusUnauthorized, dto.ResponseError{Message: "Пользователь не авторизован"})
 			c.Abort()
 			return
 		}
 
 		for _, role := range allowedRoles {
-			if currentUser.(handlers.UserInfo).Role.Name == role {
+			if currentUser.(dto.UserInfo).Role.Name == role {
 				c.Next()
 				return
 			}
 		}
-		c.JSON(http.StatusForbidden, handlers.ResponseError{Message: "Недостаточно прав"})
+		c.JSON(http.StatusForbidden, dto.ResponseError{Message: "Недостаточно прав"})
 		c.Abort()
 	}
 }

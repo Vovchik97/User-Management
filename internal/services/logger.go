@@ -1,13 +1,12 @@
-package utils
+package services
 
 import (
-	"fmt"
 	"time"
 	"userManagement/internal/config"
 	"userManagement/internal/models"
 )
 
-func LogAction(userID uint, action string) {
+func LogAction(userID uint, action string) error {
 	log := models.ActivityLog{
 		UserID:    userID,
 		Action:    action,
@@ -15,6 +14,8 @@ func LogAction(userID uint, action string) {
 	}
 
 	if err := config.DB.Create(&log).Error; err != nil {
-		fmt.Println("Ошибка при записи лога:", err)
+		return err
 	}
+
+	return nil
 }

@@ -38,27 +38,32 @@ func InitDB() {
 	)
 
 	// Открываем подключение к БД с помощью GORM
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal("Ошибка подключения к БД: ", err)
+	db, errDB := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if errDB != nil {
+		log.Fatal("Ошибка подключения к БД: ", errDB)
 	}
 
 	// Сохраняем подключение в глобальной переменной
 	DB = db
 
 	// Автоматическая миграция таблицы users
-	err = db.AutoMigrate(
+	errDB = db.AutoMigrate(
 		&models.User{},
 		&models.Role{},
 		&models.Group{},
 		&models.ActivityLog{},
 	)
-	if err != nil {
-		log.Fatal("Ошибка миграции: ", err)
+	if errDB != nil {
+		log.Fatal("Ошибка миграции: ", errDB)
 	}
 
-	seed.SeedRoles(DB)
-	seed.SeedAdmin(DB)
+	if err := seed.SeedRoles(DB); err != nil {
+		log.Fatalf("Ошибка при сидировании ролей: %v", err)
+	}
+
+	if err := seed.SeedAdmin(DB); err != nil {
+		log.Fatalf("Ошибка при сидировании админа: %v", err)
+	}
 
 	fmt.Println("Подключение к базе данных успешно! Миграция завершена.")
 }

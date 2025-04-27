@@ -1,12 +1,11 @@
 package middleware
 
 import (
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync"
 	"time"
-	"userManagement/internal/handlers"
-
-	"github.com/gin-gonic/gin"
+	"userManagement/internal/dto"
 )
 
 type clientData struct {
@@ -40,7 +39,7 @@ func RateLimiter() gin.HandlerFunc {
 		client.RequestCount++
 
 		if client.RequestCount > LimitRequestsPerMinute {
-			c.JSON(http.StatusTooManyRequests, handlers.ResponseError{
+			c.JSON(http.StatusTooManyRequests, dto.ResponseError{
 				Message: "Слишком много запросов. Попробуйте позже",
 			})
 			c.Abort()

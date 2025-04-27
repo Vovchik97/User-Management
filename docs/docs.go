@@ -42,7 +42,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.LoginInput"
+                            "$ref": "#/definitions/dto.LoginInput"
                         }
                     }
                 ],
@@ -50,19 +50,19 @@ const docTemplate = `{
                     "200": {
                         "description": "JWT токен",
                         "schema": {
-                            "$ref": "#/definitions/handlers.AuthResponse"
+                            "$ref": "#/definitions/dto.AuthResponse"
                         }
                     },
                     "400": {
                         "description": "Ошибка при валидации данных",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "401": {
                         "description": "Неверный email или пароль",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -87,7 +87,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.RegisterInput"
+                            "$ref": "#/definitions/dto.RegisterInput"
                         }
                     }
                 ],
@@ -95,19 +95,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Регистрация прошла успешно",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseMessage"
+                            "$ref": "#/definitions/dto.ResponseMessage"
                         }
                     },
                     "400": {
                         "description": "Ошибка при валидации данных",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Ошибка при хешировании пароля или сохранении данных",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -140,7 +140,7 @@ const docTemplate = `{
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -168,7 +168,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.GroupInput"
+                            "$ref": "#/definitions/dto.GroupInput"
                         }
                     }
                 ],
@@ -176,19 +176,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseMessage"
+                            "$ref": "#/definitions/dto.ResponseMessage"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -225,7 +225,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.GroupInput"
+                            "$ref": "#/definitions/dto.GroupInput"
                         }
                     }
                 ],
@@ -233,19 +233,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseMessage"
+                            "$ref": "#/definitions/dto.ResponseMessage"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -276,13 +276,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseMessage"
+                            "$ref": "#/definitions/dto.ResponseMessage"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -319,7 +319,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.UserGroupInput"
+                            "$ref": "#/definitions/dto.UserGroupInput"
                         }
                     }
                 ],
@@ -327,19 +327,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseMessage"
+                            "$ref": "#/definitions/dto.ResponseMessage"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -379,19 +379,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseMessage"
+                            "$ref": "#/definitions/dto.ResponseMessage"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -433,7 +433,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Ошибка при получении списка пользователей",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -462,7 +462,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.CreateUserInput"
+                            "$ref": "#/definitions/dto.CreateUserInput"
                         }
                     }
                 ],
@@ -476,7 +476,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Ошибка при создании пользователя",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -509,7 +509,7 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -542,19 +542,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Неавторизованный доступ",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Пользователь не найден",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "500": {
                         "description": "Ошибка при получении профиля пользователя",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -592,7 +592,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.UpdateUserInput"
+                            "$ref": "#/definitions/dto.UpdateUserInput"
                         }
                     }
                 ],
@@ -606,13 +606,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Ошибка при обновлении пользователя",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Пользователь не найден",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -641,13 +641,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Пользователь удален",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Пользователь не найден",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -683,19 +683,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseMessage"
+                            "$ref": "#/definitions/dto.ResponseMessage"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -733,7 +733,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.UpdateUserRoleInput"
+                            "$ref": "#/definitions/dto.UpdateUserRoleInput"
                         }
                     }
                 ],
@@ -747,13 +747,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Неверный ввод",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "404": {
                         "description": "Пользователь не найден",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -789,19 +789,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseMessage"
+                            "$ref": "#/definitions/dto.ResponseMessage"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ResponseError"
+                            "$ref": "#/definitions/dto.ResponseError"
                         }
                     }
                 }
@@ -809,7 +809,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.AuthResponse": {
+        "dto.AuthResponse": {
             "type": "object",
             "properties": {
                 "token": {
@@ -817,7 +817,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.CreateUserInput": {
+        "dto.CreateUserInput": {
             "type": "object",
             "required": [
                 "email",
@@ -837,7 +837,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.GroupInput": {
+        "dto.GroupInput": {
             "type": "object",
             "required": [
                 "name"
@@ -848,7 +848,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.LoginInput": {
+        "dto.LoginInput": {
             "type": "object",
             "required": [
                 "email",
@@ -864,7 +864,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.RegisterInput": {
+        "dto.RegisterInput": {
             "type": "object",
             "required": [
                 "email",
@@ -884,7 +884,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.ResponseError": {
+        "dto.ResponseError": {
             "type": "object",
             "properties": {
                 "message": {
@@ -892,7 +892,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.ResponseMessage": {
+        "dto.ResponseMessage": {
             "type": "object",
             "properties": {
                 "message": {
@@ -900,7 +900,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.UpdateUserInput": {
+        "dto.UpdateUserInput": {
             "type": "object",
             "required": [
                 "name"
@@ -914,7 +914,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.UpdateUserRoleInput": {
+        "dto.UpdateUserRoleInput": {
             "type": "object",
             "required": [
                 "role_name"
@@ -925,7 +925,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.UserGroupInput": {
+        "dto.UserGroupInput": {
             "type": "object",
             "required": [
                 "user_id"
