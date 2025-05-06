@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 	"userManagement/internal/dto"
+	"userManagement/internal/utils"
 )
 
 type clientData struct {
@@ -39,6 +40,7 @@ func RateLimiter() gin.HandlerFunc {
 		client.RequestCount++
 
 		if client.RequestCount > LimitRequestsPerMinute {
+			utils.Log.Warnf("IP %s превысил лимит запросов (%d в минуту)", ip, LimitRequestsPerMinute)
 			c.JSON(http.StatusTooManyRequests, dto.ResponseError{
 				Message: "Слишком много запросов. Попробуйте позже",
 			})

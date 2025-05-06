@@ -5,10 +5,10 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 	"os"
 	"userManagement/internal/models"
 	"userManagement/internal/seed"
+	"userManagement/internal/utils"
 )
 
 // Глобальные переменные
@@ -21,7 +21,7 @@ var (
 func InitDB() {
 	// Загружаем .ENV файл
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Ошибка загрузки .env файла: ")
+		utils.Log.Fatal("Ошибка загрузки .env файла: ")
 	}
 
 	// Загружаем JWT из .ENV
@@ -40,7 +40,7 @@ func InitDB() {
 	// Открываем подключение к БД с помощью GORM
 	db, errDB := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if errDB != nil {
-		log.Fatal("Ошибка подключения к БД: ", errDB)
+		utils.Log.Fatalf("Ошибка подключения к БД: %v", errDB)
 	}
 
 	// Сохраняем подключение в глобальной переменной
@@ -54,16 +54,16 @@ func InitDB() {
 		&models.ActivityLog{},
 	)
 	if errDB != nil {
-		log.Fatal("Ошибка миграции: ", errDB)
+		utils.Log.Fatalf("Ошибка миграции: %v", errDB)
 	}
 
 	if err := seed.SeedRoles(DB); err != nil {
-		log.Fatalf("Ошибка при сидировании ролей: %v", err)
+		utils.Log.Fatalf("Ошибка при сидировании ролей: %v", err)
 	}
 
 	if err := seed.SeedAdmin(DB); err != nil {
-		log.Fatalf("Ошибка при сидировании админа: %v", err)
+		utils.Log.Fatalf("Ошибка при сидировании админа: %v", err)
 	}
 
-	fmt.Println("Подключение к базе данных успешно! Миграция завершена.")
+	utils.Log.Info("Подключение к базе данных успешно! Миграция завершена.")
 }

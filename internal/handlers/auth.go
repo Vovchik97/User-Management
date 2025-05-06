@@ -26,12 +26,14 @@ import (
 func Register(c *gin.Context) {
 	var input dto.RegisterInput
 	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.Log.Warnf("Ошибка валидации при регистрации: %v", err)
 		c.JSON(http.StatusBadRequest, dto.ResponseError{Message: err.Error()})
 		return
 	}
 
 	hashedPassword, errPassword := utils.HashPassword(input.Password)
 	if errPassword != nil {
+		utils.Log.Errorf("Ошибка хеширования пароля: %v", errPassword)
 		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Ошибка при хешировании пароля"})
 		return
 	}
@@ -44,10 +46,12 @@ func Register(c *gin.Context) {
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
+		utils.Log.Errorf("Ошибка создания пользователя: %v", err)
 		c.JSON(http.StatusBadRequest, dto.ResponseError{Message: "Не удалось зарегистрироваться"})
 		return
 	}
 
+	utils.Log.Info("Пользователь %s (%s) зарегистрирован", user.Name, user.Email)
 	c.JSON(http.StatusCreated, dto.ResponseMessage{Message: "Регистрация прошла успешно"})
 }
 
@@ -64,17 +68,20 @@ func Register(c *gin.Context) {
 func Login(c *gin.Context) {
 	var input dto.LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
+		utils.Log.Warnf("Ошибка валидации при входе: %v", err)
 		c.JSON(http.StatusBadRequest, dto.ResponseError{Message: err.Error()})
 		return
 	}
 
 	var user models.User
 	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+		utils.Log.Warnf("Попытка входа с неверным email: %s", input.Email)
 		c.JSON(http.StatusUnauthorized, dto.ResponseError{Message: "Неверный email или пароль"})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(input.Password)); err != nil {
+		utils.Log.Warnf("Неверный пароль для пользователя: %s", user.Email)
 		c.JSON(http.StatusUnauthorized, dto.ResponseError{Message: "Неверный email или пароль"})
 		return
 	}
@@ -88,9 +95,11 @@ func Login(c *gin.Context) {
 
 	tokenString, err := token.SignedString(config.JWTSecret)
 	if err != nil {
+		utils.Log.Errorf("Ошибка при создании токена для %s: %v", user.Email, err)
 		c.JSON(http.StatusInternalServerError, dto.ResponseError{Message: "Ошибка создания токена"})
 		return
 	}
 
+	utils.Log.Infof("Пользователь %s успешно вошел в систему", user.Email)
 	c.JSON(http.StatusOK, dto.AuthResponse{Token: tokenString})
 }

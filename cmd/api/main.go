@@ -24,6 +24,7 @@ import (
 	"userManagement/internal/config"
 	"userManagement/internal/middleware"
 	"userManagement/internal/routes"
+	"userManagement/internal/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/swaggo/files"
@@ -33,6 +34,9 @@ import (
 )
 
 func main() {
+	// Инициализируем логгер
+	utils.InitLogger()
+
 	// Подключаем БД
 	config.InitDB()
 
@@ -54,6 +58,8 @@ func main() {
 	r.GET("/docs", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
 	})
+
+	utils.Log.Info("Сервер запущен на порту 8080")
 	// Запуск сервера
 	r.Run(":8080")
 }
